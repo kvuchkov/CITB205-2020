@@ -317,5 +317,131 @@ At the end, build and run:
 216.59
 ~~~
 
-OK, we have all the information we need exposed to the `TextPrinter` class. Now we just need to format it.
+OK, we have all the information we need exposed to the `TextPrinter` class. Now we just need to format it - all the work will be in `textprinter.cpp` file.
 
+We start off by including the standard library for input/output manupulations:
+```c++
+#include <iomanip>
+```
+
+First, let's format the numbers. Since we are talking money here, we want ot format doubles to the second digit after the decimal point. To do this, we must configure the output stream:
+```c++
+out << std::fixed << std::setprecision(2);
+```
+
+Build and run:
+~~~
+5 Super Mob 12.90 64.50
+12 Tea Cup 5.30 63.60
+8 Red Wine Glass 8.60 68.80
+196.90
+19.69
+216.59
+~~~
+
+Now, we want to get a table at the end. `<iomanip>` has a very useful function called `setw` - it will create a fixed-width field in which the next output will go. So, for example:
+```c++
+cout << std::setw(10) << 10 << std::endl;
+```
+Will output "        10", i.e. 10 padded with spaces on the left. We can change the alignment and get "10          " by combining `setw` with `right`. We want only the product description to be right aligned.
+
+To produce the table from the example, let's put the data into columns of width 8, 40, 10 and 10. We want all cells right aligned except the product description, which will be left aligned. 
+```c++
+void TextPrinter::print(std::ostream &out, Invoice invoice) {
+    out << std::fixed << std::setprecision(2);
+
+    for (auto item : invoice.getItems()) {
+        out << setw(8) << right << item.getQuantity();
+        out << setw(40) << left << item.getDescription();
+        out << setw(10) << right << item.getPrice();
+        out << setw(10) << right << item.total();
+        out << endl;
+    }
+
+    out << setw(58) << right << "Subtotal" << setw(10) << right << invoice.subtotal() << endl;
+    out << setw(58) << right << "Taxes" << setw(10) << right << invoice.taxes() << endl;
+    out << setw(58) << right << "TOTAL" << setw(10) << right << invoice.total() << endl;
+}
+```
+
+Build and run:
+~~~
+       5Super Mob                                    12.90     64.50
+      12Tea Cup                                       5.30     63.60
+       8Red Wine Glass                                8.60     68.80
+                                                  Subtotal    196.90
+                                                     Taxes     19.69
+                                                     TOTAL    216.59
+~~~
+
+This is close. We now need to put the vertical separators.
+```c++
+void TextPrinter::print(std::ostream &out, Invoice invoice) {
+    out << std::fixed << std::setprecision(2);
+
+    for (auto item : invoice.getItems()) {
+        out << '|';
+        out << setw(8) << right << item.getQuantity() << '|';
+        out << setw(40) << left << item.getDescription() << '|';
+        out << setw(10) << right << item.getPrice() << '|';
+        out << setw(10) << right << item.total() << '|';
+        out << endl;
+    }
+
+    out << setw(58+3) << right << "Subtotal" << '|' << setw(10) << right << invoice.subtotal() << endl;
+    out << setw(58+3) << right << "Taxes" << '|' << setw(10) << right << invoice.taxes() << endl;
+    out << setw(58+3) << right << "TOTAL" << '|' << setw(10) << right << invoice.total() << endl;
+}
+```
+
+Note that because we have separators, the width of the summary rows (i.e. subtotal, taxes and total) needs to be increased with the number of vertical separators - in this case 3.
+
+Finally, we want to put the horizontal separators - we will use the `std::setfill` function which sets the padding character when using `std:setw` (`' '` by default):
+```c++
+void TextPrinter::print(std::ostream &out, Invoice invoice) {
+    out << std::fixed << std::setprecision(2);
+    
+    out << std::setfill('-') << setw(68+5) << "" << std::setfill(' ') << endl;
+
+    for (auto item : invoice.getItems()) {
+        out << '|';
+        out << setw(8) << right << item.getQuantity() << '|';
+        out << setw(40) << left << item.getDescription() << '|';
+        out << setw(10) << right << item.getPrice() << '|';
+        out << setw(10) << right << item.total() << '|';
+        out << endl;
+        
+        out << std::setfill('-') << setw(68+5) << "" << std::setfill(' ') << endl;
+    }
+
+    out << setw(58+3) << right << "Subtotal" << '|' << setw(10) << right << invoice.subtotal() << '|' << endl;
+    out << setw(58+3) << "" << std::setfill('-') << setw(12) << "" << std::setfill(' ') << endl;
+    out << setw(58+3) << right << "Taxes" << '|' << setw(10) << right << invoice.taxes() << '|' << endl;
+    out << setw(58+3) << "" << std::setfill('-') << setw(12) << "" << std::setfill(' ') << endl;
+    out << setw(58+3) << right << "TOTAL" << '|' << setw(10) << right << invoice.total() << '|' << endl;
+    out << setw(58+3) << "" << std::setfill('-') << setw(12) << "" << std::setfill(' ') << endl;
+}
+
+```
+Build and run:
+~~~
+-------------------------------------------------------------------------
+|       5|Super Mob                               |     12.90|     64.50|
+-------------------------------------------------------------------------
+|      12|Tea Cup                                 |      5.30|     63.60|
+-------------------------------------------------------------------------
+|       8|Red Wine Glass                          |      8.60|     68.80|
+-------------------------------------------------------------------------
+                                                     Subtotal|    196.90|
+                                                             ------------
+                                                        Taxes|     19.69|
+                                                             ------------
+                                                        TOTAL|    216.59|
+                                                             ------------
+~~~
+
+Voila! Could be prittier, but works for now.
+
+# The End
+
+We have all the information of the invoice presented as a table. 
