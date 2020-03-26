@@ -36,7 +36,7 @@ Now go to the next empty function body, implement it and repeat steps #1 to #6.
 
 >Tip: You can commit your changes in the `master` branch after each run of steps 1 to 6, i.e. having a checkpoint of a compiling program. To do that: `git add .` and then `git commit -m "your message"`.
 
-At the end, you should be able to run `./lab3` on Linux/Mac or `lab3.exe` on Windows and see all information on the invoice (without the pretty format).
+At the end, you should be able to run `./lab3` on Linux/Mac or `lab3.exe` on Windows and see the subtotal of the invoice.
 
 # Example Steps
 
