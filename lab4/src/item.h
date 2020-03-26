@@ -8,6 +8,10 @@ class Item {
 public:
     Item(Product product, int quantity);
     double total();
+    string getDescription() const;
+    int getQuantity() const;
+    double getPrice() const;
+    double total() const;
 private:
     Product product;
     int quantity;
