@@ -11,6 +11,9 @@ using std::vector;
 class Invoice {
 public:
     void add(Product product, int quantity);
+    double subtotal();
+private:
+    vector<Item> items;
 };
 
 

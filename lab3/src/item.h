@@ -5,7 +5,12 @@
 #include "product.h"
 
 class Item {
-
+public:
+    Item(Product product, int quantity);
+    double total();
+private:
+    Product product;
+    int quantity;
 };
 
 
