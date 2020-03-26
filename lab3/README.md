@@ -1,5 +1,5 @@
 # Synpsis
-The goal of this exercise is to implement the empty member functions from Lab #2 and print the information on the invoice. At this point, do not waste time trying to format the output of the `TextPrinter` class, but focus on implementing the functions of the other classes.
+The goal of this exercise is to implement the empty member functions from Lab #2 and print the _subtotal_ of the invoice. At this point, do not waste time trying to format the output of the `TextPrinter` class, but focus on implementing the functions of the other classes.
 
 # Clean
 1. You first need to have clean repository, i.e. no changes. You have to commit everything you have worked on:
@@ -466,4 +466,7 @@ Run:
 ~~~
 
 Voila! We have our program actually doing something!
+
+# The End
+Now that our program is outputing the actual subtotal of the invoice, we are done with this exrecise and can move to Lab #4
 
