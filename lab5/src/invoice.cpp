@@ -12,7 +12,7 @@ double Invoice::subtotal() const {
     for (auto item : items) {
         sum += item.total();
     }
-    return sum;
+    return sum - totalDiscount();
 }
 
 double Invoice::taxes() const {
@@ -25,4 +25,16 @@ double Invoice::total() const {
 
 vector<Item> Invoice::getItems() const {
     return items;
+}
+
+void Invoice::add(Discount *discount) {
+    discounts.push_back(discount);
+}
+
+double Invoice::totalDiscount() const {
+    double sum = 0;
+    for (auto discount : discounts) {
+        sum += discount->total(items);
+    }
+    return sum;   
 }

@@ -23,6 +23,8 @@ void TextPrinter::print(std::ostream &out, Invoice invoice) {
         out << std::setfill('-') << setw(68+5) << "" << std::setfill(' ') << endl;
     }
 
+    out << setw(58+3) << right << "Discount" << '|' << setw(10) << right << invoice.totalDiscount() << '|' << endl;
+    out << setw(58+3) << "" << std::setfill('-') << setw(12) << "" << std::setfill(' ') << endl;
     out << setw(58+3) << right << "Subtotal" << '|' << setw(10) << right << invoice.subtotal() << '|' << endl;
     out << setw(58+3) << "" << std::setfill('-') << setw(12) << "" << std::setfill(' ') << endl;
     out << setw(58+3) << right << "Taxes" << '|' << setw(10) << right << invoice.taxes() << '|' << endl;
