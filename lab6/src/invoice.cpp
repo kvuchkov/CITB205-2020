@@ -2,7 +2,7 @@
 
 const double TAX = 0.1; // 10% flat tax rate
 
-void Invoice::add(Product product, int quantity) {
+void Invoice::add(const Product *product, int quantity) {
     Item item(product, quantity);
     items.push_back(item);
 }

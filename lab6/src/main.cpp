@@ -5,9 +5,9 @@
 
 int main() {
     Invoice invoice;
-    Product superMob("Super Mob", 12.90);
-    Product teaCup("Tea Cup", 5.30);
-    Product redWineGlass("Red Wine Glass", 8.60);
+    Product *superMob = new Product("Super Mob", 12.90);
+    Product *teaCup = new Product("Tea Cup", 5.30);
+    Product *redWineGlass = new Product("Red Wine Glass", 8.60);
 
     FixedDiscount *fiveOff = new FixedDiscount(5.0);
     PercentageDiscount *tenPercentOff = new PercentageDiscount(10);

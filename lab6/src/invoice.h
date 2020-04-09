@@ -11,7 +11,7 @@ using std::vector;
 
 class Invoice {
 public:
-    void add(Product product, int quantity);
+    void add(const Product *product, int quantity);
     void add(Discount *discount);
     double subtotal() const;
     double taxes() const;
