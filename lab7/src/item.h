@@ -8,8 +8,10 @@ class Item {
 public:
     Item(const Product *product, int quantity);
     double total();
+    int getProductID() const;
     string getDescription() const;
     int getQuantity() const;
+    void setQuantity(int qty);
     double getPrice() const;
     double total() const;
 private:
