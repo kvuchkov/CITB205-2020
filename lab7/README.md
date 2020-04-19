@@ -270,4 +270,7 @@ Done! Products are now read from the `.dat` file. Try it out by changing some of
 
 ## Interactive program
 
-In this part you need to make the program integractive.
+In this part you need to make the program integractive. To do this we need to
+ - Update the main to implement interactive commands reading
+ - Update the invoice class to be able to add/remove products and discounts.
+
