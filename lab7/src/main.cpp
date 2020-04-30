@@ -43,7 +43,10 @@ void executeAdd(Invoice &invoice, const Catalog &catalog) {
 }
 
 void executeRemove(Invoice &invoice, const Catalog &catalog) {
-    // TODO
+    int id, qty;
+    cin >> id >> qty;
+    Product * product = catalog.get(id);
+    invoice.remove(product, qty);
 }
 
 void executeDiscount(Invoice &invoice) {
@@ -58,7 +61,7 @@ void executeDiscount(Invoice &invoice) {
         cin >> percentage;
         invoice.add(new PercentageDiscount(percentage));
     } else if (discount == "clear") {
-        // TODO
+        invoice.clearDiscounts();
     } else {
         cerr << "Unrecognized discount command " << discount << endl;
         return;
@@ -73,7 +76,7 @@ void executePrint(const Invoice &invoice) {
 int main(int argc, char *argv[]) {
 
     if (argc != 2) {
-        std::cerr << "Invalid usage. Usage: ./lab7 path_to_catalog_file" << std::endl;
+        std::cerr << "Invalid usage. Usage: ./lab9 path_to_catalog_file" << std::endl;
         return 1;
     }
 
