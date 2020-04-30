@@ -2,7 +2,7 @@
 In this exercise, we will use operator overloading to see how this could improve the syntax of our program. Note that we could go without overloading operators by just use functions, but the operators could improve the readability of our code in certain situations. Use with caution!
 
 # Requirements
-This is based on the program we had at the end of Lab 7. However, a few minor changes were done in `main.cpp` and you need to make adjustments in `Product` and `Catalog` classes to make everything works.
+This is based on the program we had at the end of Lab 7. However, a few minor changes were done in `main.cpp`. To complete the exercise, you need to make adjustments in `Product` and `Catalog` classes to make the program compile and work correctly.
 
 There is a new interactive command: `product`, e.g. `product 4 Mug 2.80` which adds a new product to the catalog on the fly. The work in `main` is already implemented. However:
 * The product is added to the catalog using the `+=` operator, i.e. `catalog += product`. 
