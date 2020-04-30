@@ -1,0 +1,13 @@
+add 1 2
+add 2 2
+add 3 3
+print
+remove 2 1
+print
+discount off 10
+print
+discount fixed 5
+print
+discount clear
+print
+
