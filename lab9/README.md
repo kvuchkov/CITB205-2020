@@ -30,3 +30,99 @@ Don't forget to work in small iterations towards completing the exercise. I will
 
 # Steps
 
+The first complain of the compiler is that `Product` doesn't have a default constructor. Let's add it:
+
+`product.h`
+```c++
+class Product {
+public:
+    Product(); // define a default constructor
+    Product(int id, string name, double price);
+    Product(const Product &other);
+    int getID() const;
+    string getName() const;
+    double getPrice() const;
+private:
+    int id;
+    string name;
+    double price;
+};
+
+```
+`product.cpp`
+```c++
+Product::Product() {
+    this->id = 0;
+    this->price = 0;
+}
+```
+
+Next, `cin >> product` doesn't work, because there is no such function (i.e. operator). We need to declare it.
+
+The `>>` operator is actually a function that accepts two arguments, think of `>>(x, y)` where `>>` is the function name. We have a lefthand operand of type `std::istream` and a righthand operand of type `Product`. Now, since we are going to modify both operands as part of the operation (reading from a stream is modifying it, because what is read from it cannot be read again; similarly we want to set id, price and name of the product object we are reading) we will pass those by reference. 
+
+The tricky part is that we want this operator function to be able to write the private members of the Product class. We know that if something is private, only members of the class can access it. We will use a `friend` function for this. A `friend` function is not a member function, because it doesn't have the class scope, but it has access to private members if it gets its hands on an object of that class. It is like a member function that doesn't have `this`. 
+
+`product.h`
+```c++
+#include <iostream>
+#include <string>
+
+using std::string;
+using std::istream;
+
+class Product {
+public:
+    Product();
+    Product(int id, string name, double price);
+    Product(const Product &other);
+    int getID() const;
+    string getName() const;
+    double getPrice() const;
+    friend istream & operator>>(istream &in, Product &product);
+private:
+    int id;
+    string name;
+    double price;
+};
+```
+`product.cpp`
+```c++
+std::istream & operator>>(std::istream &in, Product &product) {
+    int id;
+    string name;
+    double price;
+    in >> product.id >> product.name >> product.price;
+    return in;
+}
+```
+
+This is it! We can now read products from streams (any stream, not just `cin`).
+
+Now we move on to the next line: `catalog += product;`
+
+Similarly to the `>>` operator, `+=` is a function with two argument. However, this time we can define this operator as a member function of the `Catalog` class. Why? Because the lefthand operand is of type `Catalog`. We couldn't do this for the `operator>>` because the lefthand operator was `istream` and we don't have access to the code of the class. Think of `catalog.+=(product)`. We could have just used an `add` function here (which is a better option in this case), but we want to illustrate the use of operator overloading.
+
+`catalog.h`
+```c++
+class Catalog {
+public:
+    void load(string path);
+    Product* get(int id) const;
+    vector<Product*> list() const;
+    Catalog & operator+=(Product *product); // notice we return a reference
+private:
+    vector<Product*> products;
+};
+```
+`catalog.cpp`
+```c++
+Catalog & Catalog::operator+=(Product *product) {
+    this->products.push_back(product);
+    return *this;
+}
+```
+
+Done. Go ahead and test it by using the `product` and the `show` commands.
+
+> As a last exercise, think and experiment with other pieces of the program that could benefit from operator overloading. How about having a `product * 4` produce an `Item` instance? Or `item + discount` produce a discounted item? How would those operators look in the code?
