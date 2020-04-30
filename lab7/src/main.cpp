@@ -76,7 +76,7 @@ void executePrint(const Invoice &invoice) {
 int main(int argc, char *argv[]) {
 
     if (argc != 2) {
-        std::cerr << "Invalid usage. Usage: ./lab9 path_to_catalog_file" << std::endl;
+        std::cerr << "Invalid usage. Usage: ./lab7 path_to_catalog_file" << std::endl;
         return 1;
     }
 
