@@ -49,3 +49,9 @@ Product* Catalog::get(int id) const {
 vector<Product*> Catalog::list() const {
     return products;
 }
+
+Catalog & Catalog::operator+=(Product *product) {
+    this->products.push_back(product);
+    return *this;
+}
+

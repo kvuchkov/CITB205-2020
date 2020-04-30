@@ -24,3 +24,16 @@ double Product::getPrice() const {
 string Product::getName() const {
     return name;
 }
+
+Product::Product() {
+    this->id = 0;
+    this->price = 0;
+}
+
+std::istream & operator>>(std::istream &in, Product &product) {
+    int id;
+    string name;
+    double price;
+    in >> product.id >> product.name >> product.price;
+    return in;
+}
