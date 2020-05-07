@@ -19,7 +19,7 @@ We already can add products from the catalog and we can add products to the cata
 Changes you need to do:
 * `Catalog::load` should keep the file open
 * `Catalog::load` should read the new format - not CSV, but fixed-width columns
-* `Catalog::operator+=` should assign an ID to the new product based on the IDs it already has, i.e. the next number
+* `Catalog::add` should assign an ID to the new product based on the IDs it already has, i.e. the next number
 * `Catalog::operator+=` should write the new product to the end of the file
 * `Catalog::update` should update the product information and write it to the file (overriding the exisitng information in the file)
 * `Catalog::~Catalog` should close the catalog file if it is opened.
