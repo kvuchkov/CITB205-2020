@@ -67,4 +67,51 @@ For now, let's define an empty body. To make our program functional, we first ne
 void Catalog::update(int id, string name, double price) {}
 ```
 
+Let's make `Catalog::load` work with the new format of the product.dat:
+`catalog.cpp`
+```c++
+using namespace std; // it is simpler to use the entire namespace
 
+// Preprocessor can help us use a different value for windows and for linux/mac.
+#ifdef _WIN32
+const int NEWLINE_WIDTH = 2;
+#else
+const int NEWLINE_WIDTH = 1;
+#endif
+
+const int ID_WIDTH = 5;
+const int NAME_WIDTH = 40;
+const int PRICE_WIDTH = 10;
+const int RECORD_WIDTH = ID_WIDTH + NAME_WIDTH + PRICE_WIDTH + NEWLINE_WIDTH;
+
+void Catalog::load(string path) {
+    ifstream fin(path);
+    if (fin.fail()) {
+        cerr << "Cannot open file " << path << endl;
+    }
+
+    int id;
+    char name[NAME_WIDTH+1]; // name max plus the terminating character for the c string
+    double price;
+
+    int line = 0;
+    while(fin) {
+        fin.seekg(line * RECORD_WIDTH, ios_base::beg); // start from the beginning of the file
+        fin >> id;
+        
+        fin.seekg(line * RECORD_WIDTH + ID_WIDTH, ios_base::beg); // we don't know the current position (id can be 1 to 5 characters), se we offset by the beginning of the file
+        fin.getline(name, NAME_WIDTH+1);
+        if (fin.fail() && fin.gcount() == NAME_WIDTH) {
+            fin.clear(); // we've read the entire name, but since we didn't reach the new line character, fin.getline sets the errro state
+        }
+
+        fin >> price; // we don't need to seek the price - it starts immediately after the name and we have read the entire name width (40 characters)
+
+        if (!fin.fail()) { // if we have successfully read the record, fin.fail will return false
+            products.push_back(new Product(id, name, price));
+        }
+
+        line++; // increment the line so that the following reads start from the next record
+    }
+}
+```
