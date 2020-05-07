@@ -5,6 +5,7 @@ In this exercise, we will add catalog management to our program. At the end of t
 We already can add products from the catalog and we can add products to the catalog on the fly, but we still cannot persist our new products on the disk.
 
 * Adding a product to the catalog with `catalog add` command should immediately persist it in the file
+* Print the catalog with `catalog show` command
 * Updating a product should be supported through `catalog update` command. It is already implemented in `main`.
 * We will keep the catalog file open as long as the catalog exists. We will use the destructor to close the file.
 * The product class will assign product IDs automatically - allowing the user to enter those is dangerous, because they could accidentaly duplicate an existing ID.
@@ -44,3 +45,26 @@ git commit -m "describe your changes"
 Don't forget to work in small iterations towards completing the exercise. I will illustrate the steps with a few examples, and then you should try on your own until you get to the final result.
 
 # Steps
+
+As always, we start by making the main compile. We need to declare the `Catalog::update` member function:
+`catalog.h`
+```c++
+class Catalog {
+public:
+    void load(string path);
+    Product* get(int id) const;
+    vector<Product*> list() const;
+    Catalog & operator+=(Product *product);
+    void update(int id, string name, double price);
+private:
+    vector<Product*> products;
+};
+```
+
+For now, let's define an empty body. To make our program functional, we first need to make the changes to the `Catalog::load`, because our products.dat cannot be parsed at the moment
+`catalog.cpp`
+```c++
+void Catalog::update(int id, string name, double price) {}
+```
+
+

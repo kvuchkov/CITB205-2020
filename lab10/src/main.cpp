@@ -17,19 +17,18 @@ using std::left;
 using std::fixed;
 using std::setprecision;
 
-void executeShow(const Catalog &catalog) {
-    for(auto product : catalog.list()) {
-        cout << left << setw(5) << product->getID();
-        cout << left << setw(40) << product->getName();
-        cout << right << setw(10) << fixed << setprecision(2) << product->getPrice();
-        cout << endl;
-    }
-}
-
 void executeCatalog(Catalog &catalog) {
     string subCommand;
     cin >> subCommand;
-    if (subCommand == "add") {
+    if (subCommand == "show") {
+        for(auto product : catalog.list()) {
+            cout << left << setw(5) << product->getID();
+            cout << left << setw(40) << product->getName();
+            cout << right << setw(10) << fixed << setprecision(2) << product->getPrice();
+            cout << endl;
+        }
+    }
+    else if (subCommand == "add") {
         string name;
         double price;
         cin >> name >> price;
@@ -108,8 +107,7 @@ int main(int argc, char *argv[]) {
 
     string cmd;
     while (cin >> cmd) {
-        if (cmd == "show") executeShow(catalog);
-        else if (cmd == "catalog") executeCatalog(catalog);
+        if (cmd == "catalog") executeCatalog(catalog);
         else if (cmd == "add") executeAdd(invoice, catalog);
         else if (cmd == "remove") executeRemove(invoice, catalog);
         else if (cmd == "discount") executeDiscount(invoice);
