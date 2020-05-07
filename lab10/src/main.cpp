@@ -32,8 +32,7 @@ void executeCatalog(Catalog &catalog) {
         string name;
         double price;
         cin >> name >> price;
-        Product *product = new Product(0, name, price);
-        catalog += product;
+        catalog.add(name, price);
     } else if (subCommand == "update") {
         int id;
         string name;
