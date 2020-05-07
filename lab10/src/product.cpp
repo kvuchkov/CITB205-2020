@@ -25,6 +25,13 @@ string Product::getName() const {
     return name;
 }
 
+void Product::setName(string name) {
+    this->name = name;
+}
+void Product::setPrice(double price) {
+    this->price = price;
+}
+
 Product::Product() {
     this->id = 0;
     this->price = 0;

@@ -16,6 +16,8 @@ public:
     string getName() const;
     double getPrice() const;
     friend istream & operator>>(istream &in, Product &product);
+    void setName(string name);
+    void setPrice(double price);
 private:
     int id;
     string name;
