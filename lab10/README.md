@@ -115,3 +115,164 @@ void Catalog::load(string path) {
     }
 }
 ```
+
+We can test with `catalog show` command - it should display all products.
+
+Before we move on, let's try to plan ahead. To complete the persistance of the catalog we need a function that writes a record. For a new record, it will write it at the end of the file. For updating an existing record, we need to overwrite its row in the file.
+
+Let's define all the functions we need in `catalog.h`
+```c++
+#include <vector>
+#include <fstream> // we need to add the library
+#include "product.h"
+
+using std::vector;
+using std::fstream; // and use the symbol
+
+class Catalog {
+public:
+    void load(string path);
+    Product* get(int id) const;
+    vector<Product*> list() const;
+    Catalog & operator+=(Product *product); // Add an entire product to the catalog
+    void update(int id, string name, double price); // Update an existing product
+    void add(string name, double price); // Add a new product and assign it an ID, will use the operator
+private:
+    vector<Product*> products;
+    fstream file; // Move the file as a member so it remains open until we destroy the Catalog object
+    void write(int pos, Product* product); // Helper that will write a product record to the file
+};
+```
+
+We need to change the `Catalog::load` to use the `file` member:
+```c++
+void Catalog::load(string path) {
+    file.open(path, ios_base::in | ios_base::out); // we call open instead of using the constructor
+    if (file.fail()) {
+        cerr << "Cannot open file " << path << endl;
+    }
+
+    int id;
+    char name[NAME_WIDTH+1]; // name max plus the terminating character for the c string
+    double price;
+
+    int line = 0;
+    while(file) {
+        file.seekg(line * RECORD_WIDTH, ios_base::beg); // start from the beginning of the file
+        file >> id;
+        
+        file.seekg(line * RECORD_WIDTH + ID_WIDTH, ios_base::beg); // we don't know the current position (id can be 1 to 5 characters), se we offset by the beginning of the file
+        file.getline(name, NAME_WIDTH+1);
+        if (file.fail() && file.gcount() == NAME_WIDTH) {
+            file.clear(); // we've read the entire name, but since we didn't reach the new line character, file.getline sets the errro state
+        }
+
+        file >> price; // we don't need to seek the price - it starts immediately after the name and we have read the entire name width (40 characters)
+
+        if (!file.fail()) { // if we have successfully read the record, file.fail will return false
+            products.push_back(new Product(id, name, price));
+        }
+
+        line++; // increment the line so that the following reads start from the next record
+    }
+    file.clear(); // we need to clear the eof state after reading, because it will prevent us from writing
+}
+```
+
+Next, we can implement the helper function `write` in `catalog.cpp`. It will receive a `pos` argument to indicate where to write in the file. A negative value (e.g. `-1`) will mean we should write at the end of the file:
+```c++
+void Catalog::write(int pos, Product* product) {
+    if (!file.is_open()) { // we check if the file is open. Note that if the Catalog::load is not called, the file will not be open.
+        cerr << "Catalog file is not open" << endl;
+        return;
+    }
+
+    cerr << "write" << endl;
+
+    if (pos < 0) {
+        file.seekp(0, ios_base::end);
+    } else {
+        file.seekp(pos, ios_base::beg);
+    }
+
+    file << left << setw(ID_WIDTH) << product->getID();
+    file << left << setw(NAME_WIDTH) << product->getName();
+    file << right << setw(PRICE_WIDTH) << product->getPrice();
+    file << endl;
+    file.flush(); // this will write the changes to the disk immediately
+}
+```
+
+Now we can use the `Catalog::write` to implement the `Catalog::add`:
+```c++
+void Catalog::add(string name, double price) {
+    int id = 0;
+    for(auto product : products) {
+        id = max(id, product->getID());
+    }
+    *this += new Product(id+1, name, price);
+}
+
+Catalog & Catalog::operator+=(Product *product) {
+    this->products.push_back(product);
+    this->write(-1, product);
+    return *this;
+}
+```
+
+Lastly, we implement the update:
+```c++
+void Catalog::update(int id, string name, double price) {
+    for (int i=0; i<products.size(); i++) {
+        if (products[i]->getID() == id) { // we first find the product
+            // Then we update the product in-memory
+            auto product = products[i];
+            product->setName(name);
+            product->setPrice(price);
+            
+            // Finally, we write the updates to disk
+            int pos = i * RECORD_WIDTH; 
+            write(pos, product);
+            return;
+        }
+    }
+    cerr << "No product with ID #" << id << endl;
+}
+```
+
+For the update to work, we need to add `Product::setName` and `Product::setPrice`:
+`product.h`
+```c++
+class Product {
+public:
+    Product();
+    Product(int id, string name, double price);
+    Product(const Product &other);
+    int getID() const;
+    string getName() const;
+    double getPrice() const;
+    friend istream & operator>>(istream &in, Product &product);
+    void setName(string name);
+    void setPrice(double price);
+private:
+    int id;
+    string name;
+    double price;
+};
+```
+
+`product.cpp`
+```c++
+void Product::setName(string name) {
+    this->name = name;
+}
+void Product::setPrice(double price) {
+    this->price = price;
+}
+```
+
+This is it. You can test by using the `catalog` commands:
+* Add a product: `catalog add Test 2.20` - this will append a new line at the end of the file and have the product directly in-memory
+* Update a product: `catalog update 3 Glass 5.50` - this will update the product #3 (wine glass) to just glass
+
+
