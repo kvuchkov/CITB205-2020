@@ -350,3 +350,11 @@ void executeRemove(Invoice &invoice, Catalog &catalog) // remove const
     invoice.remove(product, qty);
 }
  ```
+
+ A few things we've done:
+  - We have removed the const when using the Catalog. Because `file` is a stream and a member of the `Catalog` class, now every operation either _reads_ or _writes_ to the stream, so every operation changes the `file` (updates the position in the stream), therefore every operation changes the `Catalog`.
+  - `Catalog::add` allocates a new `Product` object, writes it to the disk and `index` and then disposes (i.e. deletes) the object. It is the sole owner of the object.
+  - the `Catalog::~Catalog` destructor no longer deletes products, because products are not stored as members of the `Catalog` object. `Catalog` is no longer the owner of the products retrieved through `Catalog::get`, the caller of `Catalog::get` is.
+
+
+  
