@@ -3,10 +3,10 @@
 
 #include "invoice.h"
 
-class TextPrinter {
+class TextPrinter
+{
 public:
-    void print(std::ostream &out, Invoice invoice);
+    void print(std::ostream &out, const Invoice &invoice);
 };
-
 
 #endif //LAB1_TEXTPRINTER_H

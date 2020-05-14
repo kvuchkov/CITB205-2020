@@ -7,6 +7,7 @@
 class Item {
 public:
     Item(const Product *product, int quantity);
+    ~Item();
     double total();
     int getProductID() const;
     string getDescription() const;

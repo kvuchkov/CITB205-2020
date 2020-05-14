@@ -6,23 +6,28 @@
 
 using std::vector;
 
-class Discount {
+class Discount
+{
 public:
-    virtual double total(vector<Item> items) const;
+    virtual double total(const vector<Item *> items) const;
 };
 
-class FixedDiscount : public Discount {
+class FixedDiscount : public Discount
+{
 public:
     FixedDiscount(double amount);
-    double total(vector<Item> items) const;
+    double total(const vector<Item *> items) const;
+
 private:
     double amount;
 };
 
-class PercentageDiscount : public Discount {
+class PercentageDiscount : public Discount
+{
 public:
     PercentageDiscount(int percentage);
-    double total(vector<Item> items) const;
+    double total(const vector<Item *> items) const;
+
 private:
     double rate;
 };

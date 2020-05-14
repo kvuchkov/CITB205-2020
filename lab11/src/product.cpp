@@ -15,6 +15,11 @@ Product::Product(const Product &other)
     std::cerr << "copy of product (" << name << ")" << std::endl;
 }
 
+Product::~Product()
+{
+    std::cerr << "~Product " << name << std::endl;
+}
+
 int Product::getID() const
 {
     return id;
