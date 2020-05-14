@@ -357,4 +357,426 @@ void executeRemove(Invoice &invoice, Catalog &catalog) // remove const
   - the `Catalog::~Catalog` destructor no longer deletes products, because products are not stored as members of the `Catalog` object. `Catalog` is no longer the owner of the products retrieved through `Catalog::get`, the caller of `Catalog::get` is.
 
 
-  
+Let's make one final adjustment to our `main.cpp`. So far, we have a single invoice that lives as long as our program is running. We will change that, giving the user the ability to `close` an invoice and start a new one.
+
+We will create a new invoice object. When the user enters the `done` command, we will delete this object and create a new invoice:
+`main.cpp`
+```c++
+int main(int argc, char *argv[])
+{
+
+    if (argc != 2)
+    {
+        std::cerr << "Invalid usage. Usage: ./lab9 path_to_catalog_file" << std::endl;
+        return 1;
+    }
+
+    Invoice *invoice = new Invoice(); // invoice is now a pointer
+    Catalog catalog;
+
+    catalog.load(argv[1]);
+
+    string cmd;
+    while (cin >> cmd)
+    {
+        if (cmd == "catalog")
+            executeCatalog(catalog);
+        else if (cmd == "add")
+            executeAdd(*invoice, catalog); // we need to dereference the pointer to pass a reference to the object itself
+        else if (cmd == "remove")
+            executeRemove(*invoice, catalog);
+        else if (cmd == "discount")
+            executeDiscount(*invoice);
+        else if (cmd == "print")
+            executePrint(*invoice);
+        else if (cmd == "done")
+        {
+            delete invoice; // we are done with this invoice
+            invoice = new Invoice(); // we create a new one
+        }
+        else
+        {
+            cerr << "Unrecognized command " << cmd << endl;
+        }
+    }
+
+    return 0;
+}
+```
+
+Notice that products are no longer destroyed (unless we do `catalog add`).
+
+Congratiolations! Our program now has memory leak. We allocate new products whenever we add them to the invoice, we delete the invoice, but the product remains in memory with no pointers to them and nobody to delete them. Open task manager to monitor the memory of the program and execute add several times - notice it grows, even after we do the `done` command.
+
+First, we must ask who is the owner of those leaky products. And the answer is quite simple - the invoice. Let's modify the invoice class so that it deletes all associated products.
+
+But it is not that simple. The invoice doesn't contain products, it contains items and each item has a product. So, the `Item` is the owner of the `Product`, while the `Invoice` is the owner of the `Item`. Let's try this
+
+`item.h`
+```c++
+class Item {
+public:
+    Item(const Product *product, int quantity);
+    ~Item(); // declare the destructor
+    double total();
+    int getProductID() const;
+    string getDescription() const;
+    int getQuantity() const;
+    void setQuantity(int qty);
+    double getPrice() const;
+    double total() const;
+private:
+    const Product *product;
+    int quantity;
+};
+```
+
+`item.cpp`
+```c++
+Item::~Item()
+{
+    std::cerr << "~Item" << std::endl;
+    delete product; // delete the product
+}
+```
+
+`invoice.h`
+```c++
+class Invoice
+{
+public:
+    ~Invoice(); // declare the destructor
+    void add(const Product *product, int quantity);
+    void remove(const Product *product, int quantity);
+    void add(Discount *discount);
+    double subtotal() const;
+    double taxes() const;
+    double total() const;
+    double totalDiscount() const;
+    vector<Item> getItems() const;
+    void clearDiscounts();
+
+private:
+    vector<Item> items;
+    vector<Discount *> discounts;
+
+    vector<Item>::iterator find(const Product *product);
+};
+```
+
+`invoice.cpp`
+```c++
+Invoice::~Invoice()
+{ 
+    std::cerr << "~Invoice" << std::endl;
+    // items are static members of the Invoice class, so they will be automatically deleted
+}
+```
+
+Let's test it. Run the following commads once you start the program:
+~~~
+add 1 2
+~Item
+~Product Super Mob
+print
+-------------------------------------------------------------------------
+|       2|�s���b                               |     11.90|     23.80|
+-------------------------------------------------------------------------
+~Item
+~Product [1]    4360 segmentation fault (core dumped)  ./lab11 data/products.dat
+~~~
+
+Notice that the item destructor is called immediately after we enter the `add` command. This is because we are copying the items around. We will need to change our program to use pointers to items, if we are to bind the lifecycle of products to them.
+
+
+`discount.h`
+```c++
+class Discount
+{
+public:
+    virtual double total(const vector<Item *> items) const;  // change signature
+};
+
+class FixedDiscount : public Discount
+{
+public:
+    FixedDiscount(double amount);
+    double total(const vector<Item *> items) const;  // change signature
+
+private:
+    double amount;
+};
+
+class PercentageDiscount : public Discount
+{
+public:
+    PercentageDiscount(int percentage);
+    double total(const vector<Item *> items) const; // change signature
+
+private:
+    double rate;
+};
+```
+`discount.cpp`
+```c++
+
+double Discount::total(const vector<Item *> items) const  // change signature
+{
+    return 0;
+}
+
+FixedDiscount::FixedDiscount(double amount) : amount(amount) {}
+
+double FixedDiscount::total(const vector<Item *> items) const // change signature
+{
+    return amount;
+}
+
+PercentageDiscount::PercentageDiscount(int percentage)
+{
+    rate = percentage / 100.0;
+}
+
+double PercentageDiscount::total(const vector<Item *> items) const // change signature
+{
+    double sum = 0;
+    for (auto item : items)
+    {
+        sum += item->total(); // use pointer
+    }
+
+    return sum * rate;
+}
+```
+`invoice.h`
+```c++
+class Invoice
+{
+public:
+    ~Invoice();
+    void add(const Product *product, int quantity);
+    void remove(const Product *product, int quantity);
+    void add(Discount *discount);
+    double subtotal() const;
+    double taxes() const;
+    double total() const;
+    double totalDiscount() const;
+    const vector<Item *> getItems() const; // change signature
+    void clearDiscounts();
+
+private:
+    vector<Item *> items; // store pointers
+    vector<Discount *> discounts;
+
+    vector<Item *>::iterator find(const Product *product); // change signature
+};
+```
+`invoice.cpp`
+```c++
+Invoice::~Invoice()
+{
+    std::cerr << "~Invoice" << std::endl;
+    for (auto item : items)
+    {
+        delete item; // delete all items still in the collection
+    }
+}
+
+void Invoice::add(const Product *product, int quantity)
+{
+    auto it = find(product);
+    if (it == items.end())
+    {
+        items.push_back(new Item(product, quantity)); // allocate new item on the heap
+    }
+    else
+    {
+        auto item = *it; // dereference the iterator to get the pointer
+        item->setQuantity(item->getQuantity() + quantity);
+    }
+}
+
+void Invoice::remove(const Product *product, int quantity)
+{
+    auto it = find(product);
+    if (it != items.end())
+    {
+        auto item = *it; // dereference the iterator to get the pointer
+        int remaining = std::max(item->getQuantity() - quantity, 0);
+        if (remaining > 0)
+        {
+            item->setQuantity(remaining);
+        }
+        else
+        {
+            items.erase(it);
+            delete item; // delete the item before removing it from the collection, as we no longer need it
+        }
+    }
+}
+vector<Item *>::iterator Invoice::find(const Product *product) // change signature
+{
+    for (auto it = items.begin(); it != items.end(); it++)
+    {
+        if ((*it)->getProductID() == product->getID()) // dereference the iterator to access the pointer
+        {
+            return it;
+        }
+    }
+    return items.end();
+}
+double Invoice::subtotal() const
+{
+    double sum = 0;
+    for (auto item : items)
+    {
+        sum += item->total(); // use pointer
+    }
+    return sum - totalDiscount();
+}
+const vector<Item *> Invoice::getItems() const // change signature
+{
+    return items;
+}
+```
+`textprinter.cpp`
+```c++
+
+void TextPrinter::print(std::ostream &out, Invoice invoice)
+{
+    out << std::fixed << std::setprecision(2);
+
+    out << std::setfill('-') << setw(68 + 5) << "" << std::setfill(' ') << endl;
+
+    for (auto item : invoice.getItems())
+    {
+        out << '|';
+        out << setw(8) << right << item->getQuantity() << '|'; // use pointer
+        out << setw(40) << left << item->getDescription() << '|'; // use pointer
+        out << setw(10) << right << item->getPrice() << '|'; // use pointer
+        out << setw(10) << right << item->total() << '|'; // use pointer
+        out << endl;
+
+        out << std::setfill('-') << setw(68 + 5) << "" << std::setfill(' ') << endl;
+    }
+
+    out << setw(58 + 3) << right << "Discount" << '|' << setw(10) << right << invoice.totalDiscount() << '|' << endl;
+    out << setw(58 + 3) << "" << std::setfill('-') << setw(12) << "" << std::setfill(' ') << endl;
+    out << setw(58 + 3) << right << "Subtotal" << '|' << setw(10) << right << invoice.subtotal() << '|' << endl;
+    out << setw(58 + 3) << "" << std::setfill('-') << setw(12) << "" << std::setfill(' ') << endl;
+    out << setw(58 + 3) << right << "Taxes" << '|' << setw(10) << right << invoice.taxes() << '|' << endl;
+    out << setw(58 + 3) << "" << std::setfill('-') << setw(12) << "" << std::setfill(' ') << endl;
+    out << setw(58 + 3) << right << "TOTAL" << '|' << setw(10) << right << invoice.total() << '|' << endl;
+    out << setw(58 + 3) << "" << std::setfill('-') << setw(12) << "" << std::setfill(' ') << endl;
+}
+```
+
+Let's test again:
+~~~
+add 1 2
+print
+-------------------------------------------------------------------------
+|       2|Super Mob                               |     11.90|     23.80|
+-------------------------------------------------------------------------
+                                                     Discount|      0.00|
+                                                             ------------
+                                                     Subtotal|     23.80|
+                                                             ------------
+                                                        Taxes|      2.38|
+                                                             ------------
+                                                        TOTAL|     26.18|
+                                                             ------------
+~Invoice
+~Item
+~Product Super Mob
+~~~
+
+We see the invoice destructor being called - not OK. This is because we are copying the invoice somewhere. Let's defend against that by forbidding the copy constructor:
+`invoice.h`
+```c++
+class Invoice
+{
+public:
+    Invoice(); // decleare a default constructor
+    Invoice(const Invoice &) = delete; // mark the copy constructor as deleted
+    ~Invoice();
+    void add(const Product *product, int quantity);
+    void remove(const Product *product, int quantity);
+    void add(Discount *discount);
+    double subtotal() const;
+    double taxes() const;
+    double total() const;
+    double totalDiscount() const;
+    const vector<Item *> getItems() const;
+    void clearDiscounts();
+
+private:
+    vector<Item *> items;
+    vector<Discount *> discounts;
+
+    vector<Item *>::iterator find(const Product *product);
+};
+```
+
+Execute `make` and you will see exactly where is the problem:
+~~~
+[ 12%] Building CXX object CMakeFiles/lab11.dir/src/main.cpp.o
+/home/kiko/uni/CITB205-2020/lab11/src/main.cpp: In function ‘void executePrint(const Invoice&)’:
+/home/kiko/uni/CITB205-2020/lab11/src/main.cpp:108:37: error: use of deleted function ‘Invoice::Invoice(const Invoice&)’
+     printer.print(std::cout, invoice);
+                                     ^
+In file included from /home/kiko/uni/CITB205-2020/lab11/src/main.cpp:4:0:
+/home/kiko/uni/CITB205-2020/lab11/src/invoice.h:14:5: note: declared here
+     Invoice(const Invoice &) = delete;
+     ^~~~~~~
+In file included from /home/kiko/uni/CITB205-2020/lab11/src/main.cpp:5:0:
+/home/kiko/uni/CITB205-2020/lab11/src/textprinter.h:8:10: note:   initializing argument 2 of ‘void TextPrinter::print(std::ostream&, Invoice)’
+     void print(std::ostream &out, Invoice invoice);
+          ^~~~~
+~~~
+
+
+Indeed, we are not passing a reference to the invoice in our print function.
+
+Let's use a reference so that we don't copy the invoice:
+`textprinter.h`
+```c++
+class TextPrinter
+{
+public:
+    void print(std::ostream &out, const Invoice &invoice); // change signature
+};
+```
+
+`textprinter.cpp`
+```c++
+void TextPrinter::print(std::ostream &out, const Invoice &invoice) // change signature
+{
+    out << std::fixed << std::setprecision(2);
+
+    out << std::setfill('-') << setw(68 + 5) << "" << std::setfill(' ') << endl;
+
+    for (auto item : invoice.getItems())
+    {
+        out << '|';
+        out << setw(8) << right << item->getQuantity() << '|';    // use pointer
+        out << setw(40) << left << item->getDescription() << '|'; // use pointer
+        out << setw(10) << right << item->getPrice() << '|';      // use pointer
+        out << setw(10) << right << item->total() << '|';         // use pointer
+        out << endl;
+
+        out << std::setfill('-') << setw(68 + 5) << "" << std::setfill(' ') << endl;
+    }
+
+    out << setw(58 + 3) << right << "Discount" << '|' << setw(10) << right << invoice.totalDiscount() << '|' << endl;
+    out << setw(58 + 3) << "" << std::setfill('-') << setw(12) << "" << std::setfill(' ') << endl;
+    out << setw(58 + 3) << right << "Subtotal" << '|' << setw(10) << right << invoice.subtotal() << '|' << endl;
+    out << setw(58 + 3) << "" << std::setfill('-') << setw(12) << "" << std::setfill(' ') << endl;
+    out << setw(58 + 3) << right << "Taxes" << '|' << setw(10) << right << invoice.taxes() << '|' << endl;
+    out << setw(58 + 3) << "" << std::setfill('-') << setw(12) << "" << std::setfill(' ') << endl;
+    out << setw(58 + 3) << right << "TOTAL" << '|' << setw(10) << right << invoice.total() << '|' << endl;
+    out << setw(58 + 3) << "" << std::setfill('-') << setw(12) << "" << std::setfill(' ') << endl;
+}
+```
+
+Voila! Go ahead and play a bit with the program. Notice that products are allocated on demand and their lifecycle is bound to that of their invoice item.
