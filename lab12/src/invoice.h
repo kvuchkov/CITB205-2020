@@ -5,30 +5,27 @@
 #include "product.h"
 #include "item.h"
 #include "discount.h"
+#include "inventory.h"
 
 using std::vector;
 
-class Invoice
+class Invoice : public Inventory<Product>
 {
 public:
-    Invoice(); // decleare a default constructor
+    Invoice();                         // decleare a default constructor
     Invoice(const Invoice &) = delete; // mark the copy constructor as deleted
     ~Invoice();
-    void add(const Product *product, int quantity);
-    void remove(const Product *product, int quantity);
-    void add(Discount *discount);
+    void apply(Discount *discount);
     double subtotal() const;
     double taxes() const;
     double total() const;
+    double total(Item<Product> *item) const;
     double totalDiscount() const;
-    const vector<Item *> getItems() const;
     void clearDiscounts();
 
 private:
-    vector<Item *> items;
+    Inventory<Product> items;
     vector<Discount *> discounts;
-
-    vector<Item *>::iterator find(const Product *product);
 };
 
 #endif //LAB1_INVOICE_H

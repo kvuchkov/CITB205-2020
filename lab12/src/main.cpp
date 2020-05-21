@@ -75,29 +75,43 @@ void executeRemove(Invoice &invoice, Catalog &catalog)
     invoice.remove(product, qty);
 }
 
-void executeDiscount(Invoice &invoice)
+void executeDiscount(Invoice &invoice, Inventory<Discount> &discounts)
 {
-    string discount;
-    cin >> discount;
-    if (discount == "fixed")
+    string subcmd;
+    cin >> subcmd;
+    if (subcmd == "fixed" || subcmd == "off")
     {
-        double amount;
-        cin >> amount;
-        invoice.add(new FixedDiscount(amount));
+        Discount *discount;
+        if (subcmd == "fixed")
+        {
+            double amount;
+            cin >> amount;
+            discount = new FixedDiscount(amount);
+        }
+        else
+        {
+            int perc;
+            cin >> perc;
+            discount = new PercentageDiscount(perc);
+        }
+
+        bool ok = discounts.remove(discount, 1);
+        if (ok)
+        {
+            invoice.apply(discount);
+        }
+        else
+        {
+            cerr << "No discounts left." << endl;
+        }
     }
-    else if (discount == "off")
-    {
-        int percentage;
-        cin >> percentage;
-        invoice.add(new PercentageDiscount(percentage));
-    }
-    else if (discount == "clear")
+    else if (subcmd == "clear")
     {
         invoice.clearDiscounts();
     }
     else
     {
-        cerr << "Unrecognized discount command " << discount << endl;
+        cerr << "Unrecognized discount command " << subcmd << endl;
         return;
     }
 }
@@ -119,6 +133,11 @@ int main(int argc, char *argv[])
 
     Invoice *invoice = new Invoice();
     Catalog catalog;
+    Inventory<Discount> discounts;
+    discounts.add(new FixedDiscount(10), 2);
+    discounts.add(new FixedDiscount(50), 1);
+    discounts.add(new PercentageDiscount(5), 1);
+    discounts.add(new PercentageDiscount(10), 1);
 
     catalog.load(argv[1]);
 
@@ -132,7 +151,7 @@ int main(int argc, char *argv[])
         else if (cmd == "remove")
             executeRemove(*invoice, catalog);
         else if (cmd == "discount")
-            executeDiscount(*invoice);
+            executeDiscount(*invoice, discounts);
         else if (cmd == "print")
             executePrint(*invoice);
         else if (cmd == "done")

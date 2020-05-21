@@ -1,24 +1,53 @@
+#include <iostream>
+using std::cerr;
+
 #ifndef LAB1_ITEM_H
 #define LAB1_ITEM_H
 
-
-#include "product.h"
-
-class Item {
+template <class T>
+class Item
+{
 public:
-    Item(const Product *product, int quantity);
+    Item(const T *obj, int quantity);
     ~Item();
-    double total();
-    int getProductID() const;
-    string getDescription() const;
     int getQuantity() const;
     void setQuantity(int qty);
-    double getPrice() const;
-    double total() const;
+    const T &get() const;
+
 private:
-    const Product *product;
+    const T *obj;
     int quantity;
 };
 
+template <class T>
+Item<T>::Item(const T *obj, int quantity) : obj(obj)
+{
+    this->quantity = quantity;
+}
+
+template <class T>
+Item<T>::~Item()
+{
+    std::cerr << "~Item" << std::endl;
+    delete obj;
+}
+
+template <class T>
+int Item<T>::getQuantity() const
+{
+    return quantity;
+}
+
+template <class T>
+void Item<T>::setQuantity(int qty)
+{
+    quantity = qty;
+}
+
+template <class T>
+const T &Item<T>::get() const
+{
+    return *obj;
+}
 
 #endif //LAB1_ITEM_H

@@ -13,13 +13,13 @@ void TextPrinter::print(std::ostream &out, const Invoice &invoice)
 
     out << std::setfill('-') << setw(68 + 5) << "" << std::setfill(' ') << endl;
 
-    for (auto item : invoice.getItems())
+    for (auto item : invoice.all())
     {
         out << '|';
-        out << setw(8) << right << item->getQuantity() << '|';    // use pointer
-        out << setw(40) << left << item->getDescription() << '|'; // use pointer
-        out << setw(10) << right << item->getPrice() << '|';      // use pointer
-        out << setw(10) << right << item->total() << '|';         // use pointer
+        out << setw(8) << right << item->getQuantity() << '|';
+        out << setw(40) << left << item->get().getName() << '|';
+        out << setw(10) << right << item->get().getPrice() << '|';
+        out << setw(10) << right << invoice.total(item) << '|';
         out << endl;
 
         out << std::setfill('-') << setw(68 + 5) << "" << std::setfill(' ') << endl;
