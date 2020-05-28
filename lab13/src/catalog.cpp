@@ -4,6 +4,8 @@
 #include <sstream>
 #include <string>
 #include <iomanip>
+#include <stdexcept>
+#include <cstring>
 
 using namespace std;
 
@@ -23,7 +25,7 @@ void Catalog::load(string path) // load only product IDs to be able to seek late
     file.open(path, ios_base::in | ios_base::out);
     if (file.fail())
     {
-        cerr << "Cannot open file " << path << endl;
+        throw runtime_error("Cannot open catalog file");
     }
 
     int id; // leave just the id, since we will not read anything else
@@ -45,6 +47,11 @@ void Catalog::load(string path) // load only product IDs to be able to seek late
 
 Product *Catalog::get(int id)
 {
+    if (!file.is_open())
+    {
+        throw logic_error("Catalog file is not open");
+    }
+
     for (int i = 0; i < index.size(); i++)
     {
         if (index[i] == id) // find the line of the product with this ID
@@ -98,15 +105,14 @@ void Catalog::update(int id, string name, double price)
             return;
         }
     }
-    cerr << "No product with ID #" << id << endl;
+    throw runtime_error("No product with the specified ID");
 }
 
 Product *Catalog::read(int pos)
 {
     if (!file.is_open())
     {
-        cerr << "Catalog file is not open" << endl;
-        return NULL; // return NULL, there is no product
+        throw logic_error("Catalog file is not open");
     }
 
     int id;
@@ -137,8 +143,7 @@ void Catalog::write(int pos, Product *product)
 {
     if (!file.is_open())
     {
-        cerr << "Catalog file is not open" << endl;
-        return;
+        throw logic_error("Catalog file is not open");
     }
 
     cerr << "write" << endl;

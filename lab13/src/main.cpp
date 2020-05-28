@@ -1,5 +1,6 @@
 #include <iostream>
 #include <iomanip>
+#include <stdexcept>
 
 #include "invoice.h"
 #include "textprinter.h"
@@ -12,7 +13,9 @@ using std::cout;
 using std::endl;
 using std::fixed;
 using std::left;
+using std::logic_error;
 using std::right;
+using std::runtime_error;
 using std::setprecision;
 using std::setw;
 
@@ -144,24 +147,31 @@ int main(int argc, char *argv[])
     string cmd;
     while (cin >> cmd)
     {
-        if (cmd == "catalog")
-            executeCatalog(catalog);
-        else if (cmd == "add")
-            executeAdd(*invoice, catalog);
-        else if (cmd == "remove")
-            executeRemove(*invoice, catalog);
-        else if (cmd == "discount")
-            executeDiscount(*invoice, discounts);
-        else if (cmd == "print")
-            executePrint(*invoice);
-        else if (cmd == "done")
+        try
         {
-            delete invoice;
-            invoice = new Invoice();
+            if (cmd == "catalog")
+                executeCatalog(catalog);
+            else if (cmd == "add")
+                executeAdd(*invoice, catalog);
+            else if (cmd == "remove")
+                executeRemove(*invoice, catalog);
+            else if (cmd == "discount")
+                executeDiscount(*invoice, discounts);
+            else if (cmd == "print")
+                executePrint(*invoice);
+            else if (cmd == "done")
+            {
+                delete invoice;
+                invoice = new Invoice();
+            }
+            else
+            {
+                cerr << "Unrecognized command " << cmd << endl;
+            }
         }
-        else
+        catch (runtime_error &re)
         {
-            cerr << "Unrecognized command " << cmd << endl;
+            cerr << "ERROR: " << re.what() << endl;
         }
     }
 
